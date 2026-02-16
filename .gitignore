@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# Project specific
+temp_storage/
+reports/*.html
+backend/.env
+frontend/.env
+node_modules/
+__pycache__/
+.venv/
