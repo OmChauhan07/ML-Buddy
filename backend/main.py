@@ -1,5 +1,6 @@
 import os
 import shutil
+import pandas as pd
 from fastapi import FastAPI, UploadFile, File, BackgroundTasks, Form
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -32,7 +33,19 @@ async def save_upload(file: UploadFile) -> str:
 async def upload(file: UploadFile = File(...)):
     file_path = await save_upload(file)
     print(f"File Received: {file.filename}")
-    return {"status": "ok", "filename": file.filename, "path": file_path}
+
+    # Read columns and their dtypes from the uploaded file
+    columns = []
+    try:
+        df = pd.read_csv(file_path, nrows=5)  # only read a few rows for speed
+        columns = [
+            {"name": col, "dtype": str(df[col].dtype)}
+            for col in df.columns
+        ]
+    except Exception as e:
+        print(f"Could not parse columns: {e}")
+
+    return {"status": "ok", "filename": file.filename, "path": file_path, "columns": columns}
 
 
 # ── Job Status (Polling Endpoint) ───────────────────────────────────

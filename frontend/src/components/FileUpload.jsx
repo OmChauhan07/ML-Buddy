@@ -5,6 +5,7 @@ function FileUpload({ onEdaJobStart, onTrainJobStart }) {
     const [uploadedFile, setUploadedFile] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
     const [uploadStatus, setUploadStatus] = useState(null)
+    const [columns, setColumns] = useState([])
     const [targetColumn, setTargetColumn] = useState('')
     const [taskType, setTaskType] = useState('classification')
     const [isRunningEda, setIsRunningEda] = useState(false)
@@ -17,6 +18,8 @@ function FileUpload({ onEdaJobStart, onTrainJobStart }) {
         setIsUploading(true)
         setUploadStatus(null)
         setUploadedFile(null)
+        setColumns([])
+        setTargetColumn('')
 
         const formData = new FormData()
         formData.append('file', file)
@@ -28,8 +31,14 @@ function FileUpload({ onEdaJobStart, onTrainJobStart }) {
             })
 
             if (response.ok) {
+                const data = await response.json()
                 setUploadedFile(file)
                 setUploadStatus({ type: 'success', message: `"${file.name}" uploaded successfully!` })
+
+                // Populate columns from backend response
+                if (data.columns && data.columns.length > 0) {
+                    setColumns(data.columns)
+                }
             } else {
                 setUploadStatus({ type: 'error', message: `Upload failed: ${response.statusText}` })
             }
@@ -59,12 +68,12 @@ function FileUpload({ onEdaJobStart, onTrainJobStart }) {
     }
 
     const handleRunTrain = async () => {
-        if (!uploadedFile || !targetColumn.trim()) return
+        if (!uploadedFile || !targetColumn) return
         setIsRunningTrain(true)
 
         const formData = new FormData()
         formData.append('file', uploadedFile)
-        formData.append('target', targetColumn.trim())
+        formData.append('target', targetColumn)
         formData.append('task_type', taskType)
 
         try {
@@ -135,13 +144,18 @@ function FileUpload({ onEdaJobStart, onTrainJobStart }) {
 
                     <div className="train-section">
                         <div className="train-inputs">
-                            <input
-                                type="text"
-                                placeholder="Target column name"
+                            <select
                                 value={targetColumn}
                                 onChange={(e) => setTargetColumn(e.target.value)}
                                 className="target-input"
-                            />
+                            >
+                                <option value="">— Select target column —</option>
+                                {columns.map((col) => (
+                                    <option key={col.name} value={col.name}>
+                                        {col.name} ({col.dtype})
+                                    </option>
+                                ))}
+                            </select>
                             <select
                                 value={taskType}
                                 onChange={(e) => setTaskType(e.target.value)}
@@ -154,7 +168,7 @@ function FileUpload({ onEdaJobStart, onTrainJobStart }) {
                         <button
                             className="action-btn train-btn"
                             onClick={handleRunTrain}
-                            disabled={isRunningTrain || !targetColumn.trim()}
+                            disabled={isRunningTrain || !targetColumn}
                         >
                             {isRunningTrain ? '⏳ Starting...' : '🚀 Train Models'}
                         </button>
