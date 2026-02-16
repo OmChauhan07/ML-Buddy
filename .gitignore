@@ -212,6 +212,24 @@ temp_storage/
 reports/*.html
 backend/.env
 frontend/.env
+
+# Node / Frontend
 node_modules/
+frontend/dist/
+frontend/.vite/
+*.local
+
+# Python / Backend
 __pycache__/
 .venv/
+venv/
+backend/.venv/
+backend/venv/
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

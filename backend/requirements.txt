@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+pycaret
+ydata-profiling
+python-multipart
