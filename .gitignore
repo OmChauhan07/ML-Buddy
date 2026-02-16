@@ -226,6 +226,12 @@ venv/
 backend/.venv/
 backend/venv/
 
+# PyCaret / ML artifacts
+logs.log
+catboost_info/
+mlruns/
+*.pkl
+
 # Editor / IDE
 .vscode/
 .idea/
