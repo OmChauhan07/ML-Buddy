@@ -4,8 +4,6 @@ import FileUpload from './components/FileUpload'
 import Leaderboard from './components/Leaderboard'
 import EdaReport from './components/EdaReport'
 import './components/FileUpload.css'
-import './components/Leaderboard.css'
-import './components/EdaReport.css'
 import './App.css'
 
 function App() {
@@ -27,7 +25,10 @@ function App() {
 
       {/* Job Status Indicators */}
       {edaJob && (
-        <div className={`job-status ${edaJob.status}`}>
+        <div className={`max-w-xl mx-auto mt-4 px-4 py-3 rounded-xl text-sm animate-[fadeIn_0.3s_ease] ${edaJob.status === 'processing' ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400' :
+            edaJob.status === 'completed' ? 'bg-green-500/10 border border-green-500/30 text-green-400' :
+              'bg-red-500/10 border border-red-500/30 text-red-400'
+          }`}>
           {edaJob.status === 'processing' && '⏳ Generating EDA report... this may take a minute.'}
           {edaJob.status === 'completed' && '✅ EDA report ready!'}
           {edaJob.status === 'failed' && `❌ EDA failed: ${edaJob.error}`}
@@ -35,7 +36,10 @@ function App() {
       )}
 
       {trainJob && (
-        <div className={`job-status ${trainJob.status}`}>
+        <div className={`max-w-xl mx-auto mt-4 px-4 py-3 rounded-xl text-sm animate-[fadeIn_0.3s_ease] ${trainJob.status === 'processing' ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400' :
+            trainJob.status === 'completed' ? 'bg-green-500/10 border border-green-500/30 text-green-400' :
+              'bg-red-500/10 border border-red-500/30 text-red-400'
+          }`}>
           {trainJob.status === 'processing' && '⏳ Training models... this may take several minutes.'}
           {trainJob.status === 'completed' && '✅ Model training complete!'}
           {trainJob.status === 'failed' && `❌ Training failed: ${trainJob.error}`}
