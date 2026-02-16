@@ -1,18 +1,22 @@
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 
-function FileUpload() {
-    const [uploadStatus, setUploadStatus] = useState(null)
-    const [fileName, setFileName] = useState(null)
+function FileUpload({ onEdaJobStart, onTrainJobStart }) {
+    const [uploadedFile, setUploadedFile] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
+    const [uploadStatus, setUploadStatus] = useState(null)
+    const [targetColumn, setTargetColumn] = useState('')
+    const [taskType, setTaskType] = useState('classification')
+    const [isRunningEda, setIsRunningEda] = useState(false)
+    const [isRunningTrain, setIsRunningTrain] = useState(false)
 
     const onDrop = useCallback(async (acceptedFiles) => {
         if (acceptedFiles.length === 0) return
 
         const file = acceptedFiles[0]
-        setFileName(file.name)
         setIsUploading(true)
         setUploadStatus(null)
+        setUploadedFile(null)
 
         const formData = new FormData()
         formData.append('file', file)
@@ -24,8 +28,8 @@ function FileUpload() {
             })
 
             if (response.ok) {
-                const data = await response.json()
-                setUploadStatus({ type: 'success', message: `File "${file.name}" uploaded successfully!` })
+                setUploadedFile(file)
+                setUploadStatus({ type: 'success', message: `"${file.name}" uploaded successfully!` })
             } else {
                 setUploadStatus({ type: 'error', message: `Upload failed: ${response.statusText}` })
             }
@@ -35,6 +39,44 @@ function FileUpload() {
             setIsUploading(false)
         }
     }, [])
+
+    const handleRunEda = async () => {
+        if (!uploadedFile) return
+        setIsRunningEda(true)
+
+        const formData = new FormData()
+        formData.append('file', uploadedFile)
+
+        try {
+            const res = await fetch('/api/eda', { method: 'POST', body: formData })
+            const data = await res.json()
+            if (data.job_id) onEdaJobStart(data.job_id)
+        } catch (err) {
+            console.error('EDA start failed:', err)
+        } finally {
+            setIsRunningEda(false)
+        }
+    }
+
+    const handleRunTrain = async () => {
+        if (!uploadedFile || !targetColumn.trim()) return
+        setIsRunningTrain(true)
+
+        const formData = new FormData()
+        formData.append('file', uploadedFile)
+        formData.append('target', targetColumn.trim())
+        formData.append('task_type', taskType)
+
+        try {
+            const res = await fetch('/api/train', { method: 'POST', body: formData })
+            const data = await res.json()
+            if (data.job_id) onTrainJobStart(data.job_id)
+        } catch (err) {
+            console.error('Train start failed:', err)
+        } finally {
+            setIsRunningTrain(false)
+        }
+    }
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -61,7 +103,7 @@ function FileUpload() {
                         {isUploading ? '⏳' : isDragActive ? '📂' : '📁'}
                     </div>
                     {isUploading ? (
-                        <p>Uploading <strong>{fileName}</strong>...</p>
+                        <p>Uploading <strong>{uploadedFile?.name}</strong>...</p>
                     ) : isDragActive ? (
                         <p>Drop your file here...</p>
                     ) : (
@@ -77,6 +119,46 @@ function FileUpload() {
             {uploadStatus && (
                 <div className={`upload-status ${uploadStatus.type}`}>
                     {uploadStatus.type === 'success' ? '✅' : '❌'} {uploadStatus.message}
+                </div>
+            )}
+
+            {/* Action buttons — shown after file upload */}
+            {uploadedFile && (
+                <div className="actions-panel">
+                    <button
+                        className="action-btn eda-btn"
+                        onClick={handleRunEda}
+                        disabled={isRunningEda}
+                    >
+                        {isRunningEda ? '⏳ Starting...' : '📊 Run EDA Report'}
+                    </button>
+
+                    <div className="train-section">
+                        <div className="train-inputs">
+                            <input
+                                type="text"
+                                placeholder="Target column name"
+                                value={targetColumn}
+                                onChange={(e) => setTargetColumn(e.target.value)}
+                                className="target-input"
+                            />
+                            <select
+                                value={taskType}
+                                onChange={(e) => setTaskType(e.target.value)}
+                                className="task-select"
+                            >
+                                <option value="classification">Classification</option>
+                                <option value="regression">Regression</option>
+                            </select>
+                        </div>
+                        <button
+                            className="action-btn train-btn"
+                            onClick={handleRunTrain}
+                            disabled={isRunningTrain || !targetColumn.trim()}
+                        >
+                            {isRunningTrain ? '⏳ Starting...' : '🚀 Train Models'}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
